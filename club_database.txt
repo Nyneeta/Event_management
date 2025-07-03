@@ -1,0 +1,127 @@
+CREATE TABLE Users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,  -- store hashed passwords!
+    email VARCHAR(100) NOT NULL UNIQUE,
+    role ENUM('admin', 'user') NOT NULL DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Clubs (
+    club_id INT PRIMARY KEY AUTO_INCREMENT,
+    club_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    admin_id INT,  -- club admin (optional)
+    FOREIGN KEY (admin_id) REFERENCES Users(user_id) ON DELETE SET NULL
+);
+
+CREATE TABLE Events (
+    event_id INT PRIMARY KEY AUTO_INCREMENT,
+    club_id INT NOT NULL,
+    event_name VARCHAR(150) NOT NULL,
+    event_date DATE NOT NULL,
+    location VARCHAR(255),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (club_id) REFERENCES Clubs(club_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Seminars (
+    seminar_id INT PRIMARY KEY AUTO_INCREMENT,
+    club_id INT NOT NULL,
+    seminar_title VARCHAR(150) NOT NULL,
+    speaker VARCHAR(100),
+    seminar_date DATE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (club_id) REFERENCES Clubs(club_id) ON DELETE CASCADE
+);
+
+CREATE TABLE RecruitmentNotices (
+    notice_id INT PRIMARY KEY AUTO_INCREMENT,
+    club_id INT NOT NULL,
+    position VARCHAR(100) NOT NULL,
+    description TEXT,
+    application_deadline DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (club_id) REFERENCES Clubs(club_id) ON DELETE CASCADE
+);
+
+CREATE TABLE EventFeedback (
+    feedback_id INT PRIMARY KEY AUTO_INCREMENT,
+    event_id INT NOT NULL,
+    user_id INT,
+    rating INT CHECK (rating >= 1 AND rating <= 5),
+    comments TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES Events(event_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE SET NULL
+);
+
+CREATE TABLE EventRegistrations (
+    registration_id INT PRIMARY KEY AUTO_INCREMENT,
+    event_id INT NOT NULL,
+    user_id INT NOT NULL,
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES Events(event_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_registration (event_id, user_id)
+);
+
+CREATE TABLE SeminarRegistrations (
+    registration_id INT PRIMARY KEY AUTO_INCREMENT,
+    seminar_id INT NOT NULL,
+    user_id INT NOT NULL,
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (seminar_id) REFERENCES Seminars(seminar_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_registration (seminar_id, user_id)
+);
+
+
+
+CREATE TABLE RecruitmentApplications (
+    application_id INT PRIMARY KEY AUTO_INCREMENT,
+    notice_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    roll_no VARCHAR(20) NOT NULL,
+    branch VARCHAR(50) NOT NULL,
+    email VARCHAR(100),
+    application_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (notice_id) REFERENCES RecruitmentNotices(notice_id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE IF NOT EXISTS EventRegistrations (
+    registration_id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    user_id INT NOT NULL,
+    student_name VARCHAR(255) NOT NULL,
+    student_email VARCHAR(255) NOT NULL,
+    student_phone VARCHAR(20),
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('registered', 'cancelled') DEFAULT 'registered',
+    FOREIGN KEY (event_id) REFERENCES Events(event_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_event_registration (event_id, user_id)
+);
+
+
+CREATE TABLE IF NOT EXISTS SeminarRegistrations (
+    registration_id INT AUTO_INCREMENT PRIMARY KEY,
+    seminar_id INT NOT NULL,
+    user_id INT NOT NULL,
+    student_name VARCHAR(255) NOT NULL,
+    student_email VARCHAR(255) NOT NULL,
+    student_phone VARCHAR(20),
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('registered', 'cancelled') DEFAULT 'registered',
+    FOREIGN KEY (seminar_id) REFERENCES Seminars(seminar_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_seminar_registration (seminar_id, user_id)
+);
+
+
+CREATE INDEX idx_event_registrations_event_id ON EventRegistrations(event_id);
+CREATE INDEX idx_event_registrations_user_id ON EventRegistrations(user_id);
+CREATE INDEX idx_seminar_registrations_seminar_id ON SeminarRegistrations(seminar_id);
+CREATE INDEX idx_seminar_registrations_user_id ON SeminarRegistrations(user_id);
